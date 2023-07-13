@@ -1,15 +1,19 @@
 package com.cg.model;
 
+import com.cg.model.dto.CustomerCreResDTO;
+import com.cg.model.dto.CustomerResDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +21,7 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "customers")
+@Accessors(chain = true)
 public class Customer extends BaseEntity implements Validator {
 
     @Id
@@ -33,10 +38,15 @@ public class Customer extends BaseEntity implements Validator {
 
     private String phone;
 
-    private String address;
+    @OneToOne
+    @JoinColumn(name = "location_reigon_id", referencedColumnName = "id", nullable = false)
+    private LocationRegion locationRegion;
 
     @Column(precision = 10, scale = 0, nullable = false, updatable = false)
     private BigDecimal balance;
+
+    @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER)
+    private Set<Deposit> deposits;
 
 
     @Override
@@ -58,6 +68,28 @@ public class Customer extends BaseEntity implements Validator {
                 errors.rejectValue("fullName", "fullName.length");
             }
         }
+    }
 
+
+    public CustomerResDTO toCustomerResDTO() {
+        return new CustomerResDTO()
+            .setId(id)
+            .setFullName(fullName)
+            .setEmail(email)
+            .setPhone(phone)
+            .setBalance(balance)
+            .setLocationRegion(locationRegion.toLocationRegionDTO())
+            ;
+    }
+
+    public CustomerCreResDTO toCustomerCreResDTO() {
+        return new CustomerCreResDTO()
+                .setId(id)
+                .setFullName(fullName)
+                .setEmail(email)
+                .setPhone(phone)
+                .setBalance(balance)
+                .setLocationRegion(locationRegion.toLocationRegionCreResDTO())
+                ;
     }
 }

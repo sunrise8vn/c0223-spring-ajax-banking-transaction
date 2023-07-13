@@ -1,6 +1,10 @@
 package com.cg.api;
 
+import com.cg.exception.DataInputException;
+import com.cg.exception.EmailExistsException;
 import com.cg.model.Customer;
+import com.cg.model.dto.CustomerCreReqDTO;
+import com.cg.model.dto.CustomerCreResDTO;
 import com.cg.model.dto.CustomerResDTO;
 import com.cg.service.customer.ICustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,21 +26,15 @@ public class CustomerAPI {
     @GetMapping
     public ResponseEntity<?> getAllCustomers() {
 
-        List<Customer> customers = customerService.findAll();
+//        List<Customer> customers = customerService.findAll();
 
-        List<CustomerResDTO> customerResDTOS = new ArrayList<>();
+        List<CustomerResDTO> customerResDTOS = customerService.findAllCustomerResDTOS();
 
-        for (Customer item : customers) {
-            CustomerResDTO customerResDTO = new CustomerResDTO();
-            customerResDTO.setId(item.getId());
-            customerResDTO.setFullName(item.getFullName());
-            customerResDTO.setEmail(item.getEmail());
-            customerResDTO.setPhone(item.getPhone());
-            customerResDTO.setBalance(item.getBalance());
-            customerResDTO.setAddress(item.getAddress());
-
-            customerResDTOS.add(customerResDTO);
-        }
+//        for (Customer item : customers) {
+//            CustomerResDTO customerResDTO = item.toCustomerResDTO();
+//
+//            customerResDTOS.add(customerResDTO);
+//        }
 
         return new ResponseEntity<>(customerResDTOS, HttpStatus.OK);
     }
@@ -44,24 +42,36 @@ public class CustomerAPI {
     @GetMapping("/{customerId}")
     public ResponseEntity<?> getById(@PathVariable Long customerId) {
 
-        Optional<Customer> customerOptional = customerService.findById(customerId);
+        Customer customer = customerService.findById(customerId).orElseThrow(() -> {
+            throw new DataInputException("Mã khách hàng không tồn tại");
+        });
 
-        if (customerOptional.isEmpty()) {
-            Map<String, String> data = new HashMap<>();
-            data.put("message", "Long ko ton tai");
-            return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
-        }
+        CustomerResDTO customerResDTO = customer.toCustomerResDTO();
 
-        return new ResponseEntity<>(customerOptional.get(), HttpStatus.OK);
+        return new ResponseEntity<>(customerResDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/recipients-without-sender/{senderId}")
+    public ResponseEntity<?> getAllRecipientsWithoutSender(@PathVariable Long senderId) {
+
+        List<CustomerResDTO> recipients = customerService.findAllRecipientsWithoutSenderId(senderId);
+
+        return new ResponseEntity<>(recipients, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Customer customer) {
+    public ResponseEntity<?> create(@RequestBody CustomerCreReqDTO customerCreReqDTO) {
 
-        customer.setId(null);
-        customer.setBalance(BigDecimal.ZERO);
-        Customer newCustomer = customerService.save(customer);
+        String email = customerCreReqDTO.getEmail().trim();
 
-        return new ResponseEntity<>(newCustomer, HttpStatus.OK);
+        Boolean emailExists = customerService.existsByEmail(email);
+
+        if (emailExists) {
+            throw new EmailExistsException("Email đã tồn tại");
+        }
+
+        CustomerCreResDTO customerCreResDTO = customerService.create(customerCreReqDTO);
+
+        return new ResponseEntity<>(customerCreResDTO, HttpStatus.CREATED);
     }
 }

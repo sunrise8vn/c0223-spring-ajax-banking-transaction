@@ -16,7 +16,7 @@ public class Deposit extends BaseEntity implements Validator {
     private Long id;
 
 //    referencedColumnName: Tham chiếu tới cột ID của bảng customers
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = false)
     private Customer customer;
 
