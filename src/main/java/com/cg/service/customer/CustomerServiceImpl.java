@@ -81,6 +81,19 @@ public class CustomerServiceImpl implements ICustomerService {
     }
 
     @Override
+    public Customer update(Customer customer, CustomerUpReqDTO customerUpReqDTO) {
+        LocationRegionUpReqDTO locationRegionUpReqDTO = customerUpReqDTO.getLocationRegion();
+        LocationRegion locationRegion = locationRegionUpReqDTO.toLocationRegion();
+        locationRegionRepository.save(locationRegion);
+
+        Customer customerUpdate = customerUpReqDTO.toCustomer(customer.getId(), locationRegion);
+        customerUpdate.setBalance(customer.getBalance());
+        customerRepository.save(customerUpdate);
+
+        return customerUpdate;
+    }
+
+    @Override
     public Customer deposit(Deposit deposit) {
         deposit.setId(null);
         depositRepository.save(deposit);

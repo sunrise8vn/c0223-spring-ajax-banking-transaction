@@ -3,16 +3,17 @@ package com.cg.api;
 import com.cg.exception.DataInputException;
 import com.cg.exception.EmailExistsException;
 import com.cg.model.Customer;
-import com.cg.model.dto.CustomerCreReqDTO;
-import com.cg.model.dto.CustomerCreResDTO;
-import com.cg.model.dto.CustomerResDTO;
+import com.cg.model.dto.*;
 import com.cg.service.customer.ICustomerService;
+import com.cg.utils.AppUtils;
+import com.cg.utils.ValidateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 
@@ -22,6 +23,12 @@ public class CustomerAPI {
 
     @Autowired
     private ICustomerService customerService;
+
+    @Autowired
+    private AppUtils appUtils;
+
+    @Autowired
+    private ValidateUtils validateUtils;
 
     @GetMapping
     public ResponseEntity<?> getAllCustomers() {
@@ -73,5 +80,30 @@ public class CustomerAPI {
         CustomerCreResDTO customerCreResDTO = customerService.create(customerCreReqDTO);
 
         return new ResponseEntity<>(customerCreResDTO, HttpStatus.CREATED);
+    }
+
+
+    @PatchMapping("/{customerId}")
+    public ResponseEntity<?> update(@PathVariable("customerId") String customerIdStr, @Validated @RequestBody CustomerUpReqDTO customerUpReqDTO, BindingResult bindingResult) {
+
+        if (!validateUtils.isNumberValid(customerIdStr)) {
+            throw new DataInputException("Mã khách hàng không hợp lệ");
+        }
+
+        Long customerId = Long.parseLong(customerIdStr);
+
+        Customer customer = customerService.findById(customerId).orElseThrow(() -> {
+           throw new DataInputException("Mã khách hàng không tồn tại");
+        });
+
+        if (bindingResult.hasFieldErrors()) {
+            return appUtils.mapErrorToResponse(bindingResult);
+        }
+
+        Customer customerUpdate = customerService.update(customer, customerUpReqDTO);
+
+        CustomerUpResDTO customerUpResDTO = customerUpdate.toCustomerUpResDTO();
+
+        return new ResponseEntity<>(customerUpResDTO, HttpStatus.OK);
     }
 }

@@ -57,6 +57,7 @@
     </footer>
 
     <th:block th:replace="customer/modalCreate" />
+    <th:block th:replace="customer/modalUpdate" />
     <th:block th:replace="customer/modalDeposit" />
     <th:block th:replace="customer/modalTransfer" />
 
@@ -105,6 +106,18 @@
         page.dialogs.elements.wardCre = $('#wardCre');
         page.dialogs.elements.addressCre = $('#addressCre');
         page.dialogs.elements.btnCreate = $('#btnCreate');
+
+        page.dialogs.elements.modalUpdate = $('#modalUpdate');
+        page.dialogs.elements.errorAreaUpdate = $('#modalUpdate .error-area');
+        page.dialogs.elements.frmUpdate = $('#frmUpdate');
+        page.dialogs.elements.fullNameUp = $('#fullNameUp');
+        page.dialogs.elements.emailUp = $('#emailUp');
+        page.dialogs.elements.phoneUp = $('#phoneUp');
+        page.dialogs.elements.provinceUp = $('#provinceUp');
+        page.dialogs.elements.districtUp = $('#districtUp');
+        page.dialogs.elements.wardUp = $('#wardUp');
+        page.dialogs.elements.addressUp = $('#addressUp');
+        page.dialogs.elements.btnUpdate = $('#btnUpdate');
 
         page.dialogs.elements.modalDeposit = $('#modalDeposit');
         page.dialogs.elements.errorAreaDeposit = $('#modalDeposit .error-area');
@@ -240,15 +253,17 @@
                     const provinces = data.results;
 
                     page.dialogs.elements.provinceCre.empty();
+                    page.dialogs.elements.provinceUp.empty();
 
                     $.each(provinces, (index, item) => {
                        const str = `<option value="${item.province_id}">${item.province_name}</option>`;
                        page.dialogs.elements.provinceCre.append(str);
+                        page.dialogs.elements.provinceUp.append(str);
                     });
                 })
         }
 
-        page.commands.getALlDistricts = (provinceId) => {
+        page.commands.getALlDistricts = (provinceId, elem) => {
             return $.ajax({
                 type: 'GET',
                 url: page.url.getALlDistricts + '/' + provinceId
@@ -256,30 +271,56 @@
                 .done((data) => {
                     const districts = data.results;
 
-                    page.dialogs.elements.districtCre.empty();
+                    elem.empty();
 
                     $.each(districts, (index, item) => {
                         const str = `<option value="${item.district_id}">${item.district_name}</option>`;
-                        page.dialogs.elements.districtCre.append(str);
+                        elem.append(str);
                     });
                 })
         }
 
-        page.commands.getAllWards = (districtId) => {
-            $.ajax({
+        page.commands.getAllWards = (districtId, elem) => {
+            return $.ajax({
                 type: 'GET',
                 url: page.url.getAllWards + '/' + districtId
             })
                 .done((data) => {
                     const wards = data.results;
 
-                    page.dialogs.elements.wardCre.empty();
+                    elem.empty();
 
                     $.each(wards, (index, item) => {
                         const str = `<option value="${item.ward_id}">${item.ward_name}</option>`;
-                        page.dialogs.elements.wardCre.append(str);
+                        elem.append(str);
                     });
                 })
+        }
+
+        page.commands.handleAddEventShowModalUpdate = (customerId) => {
+            page.commands.getCustomerById(customerId).then((data) => {
+                customer = data;
+                locationRegion = customer.locationRegion;
+                page.dialogs.elements.fullNameUp.val(customer.fullName);
+                page.dialogs.elements.emailUp.val(customer.email);
+                page.dialogs.elements.phoneUp.val(customer.phone);
+                page.dialogs.elements.addressUp.val(locationRegion.address);
+
+                page.dialogs.elements.provinceUp.val(locationRegion.provinceId);
+
+                page.commands.getALlDistricts(locationRegion.provinceId, page.dialogs.elements.districtUp).then(() => {
+                    page.dialogs.elements.districtUp.val(locationRegion.districtId);
+
+                    page.commands.getAllWards(locationRegion.districtId, page.dialogs.elements.wardUp).then(() => {
+                       page.dialogs.elements.wardUp.val(locationRegion.wardId);
+                    });
+                });
+
+                page.dialogs.elements.modalUpdate.modal('show');
+            })
+                .catch((error) => {
+                    console.log(error);
+                });
         }
 
         page.commands.handleAddEventShowModalDeposit = (customerId) => {
@@ -376,6 +417,69 @@
                 })
         }
 
+        page.dialogs.commands.update = () => {
+            const provinceId = page.dialogs.elements.provinceUp.val();
+            const provinceName = page.dialogs.elements.provinceUp.find('option:selected').text();
+            const districtId = page.dialogs.elements.districtUp.val();
+            const districtName = page.dialogs.elements.districtUp.find('option:selected').text();
+            const wardId = page.dialogs.elements.wardUp.val();
+            const wardName = page.dialogs.elements.wardUp.find('option:selected').text();
+            const address = page.dialogs.elements.addressUp.val();
+
+            locationRegion.provinceId = provinceId;
+            locationRegion.provinceName = provinceName;
+            locationRegion.districtId = districtId;
+            locationRegion.districtName = districtName;
+            locationRegion.wardId = wardId;
+            locationRegion.wardName = wardName;
+            locationRegion.address = address;
+
+
+            const fullName = page.dialogs.elements.fullNameUp.val();
+            const email = page.dialogs.elements.emailUp.val();
+            const phone = page.dialogs.elements.phoneUp.val();
+
+            customer.fullName = fullName;
+            customer.email = email;
+            customer.phone = phone;
+            customer.locationRegion = locationRegion;
+
+
+            $.ajax({
+                headers: {
+                    'accept': 'application/json',
+                    'content-type': 'application/json'
+                },
+                type: 'PATCH',
+                url: page.url.updateCustomer + '/' + customerId,
+                data: JSON.stringify(customer)
+            })
+                .done((data) => {
+                    customer = data;
+                    locationRegion = customer.locationRegion;
+
+                    const str = page.commands.renderCustomer(customer, locationRegion);
+                    $('#tr_' + customerId).replaceWith(str);
+
+                    page.dialogs.elements.modalUpdate.modal('hide');
+
+                    App.showSuccessAlert('Cập nhật thông tin khách hàng thành công');
+                })
+                .fail((jqXHR) => {
+                    const responseJSON = jqXHR.responseJSON;
+
+                    page.dialogs.elements.errorAreaUpdate.empty();
+                    let str = '';
+
+                    $.each(responseJSON, (k, v) => {
+                        str += `<label for="${k}Up">${v}</label>`
+                    })
+
+                    page.dialogs.elements.errorAreaUpdate.append(str).removeClass('hide').addClass('show');
+
+                    console.log(jqXHR);
+                })
+        }
 
         page.dialogs.commands.deposit = () => {
             const transactionAmount = +$('#transactionAmountDep').val();
@@ -463,6 +567,13 @@
                 })
         }
 
+        page.commands.onChangeProvince = (provinceId, districtElem, wardElem) => {
+            page.commands.getALlDistricts(provinceId, districtElem).then(() => {
+                const districtId = districtElem.val();
+                page.commands.getAllWards(districtId, wardElem);
+            });
+        }
+
         page.initializeControlEvent = () => {
 
             page.elements.tbCustomerBody.on('click', 'tr', function () {
@@ -477,19 +588,39 @@
 
             page.dialogs.elements.provinceCre.on('change', function () {
                 const provinceId = $(this).val();
-                page.commands.getALlDistricts(provinceId).then(() => {
-                    const districtId = page.dialogs.elements.districtCre.val();
-                    page.commands.getAllWards(districtId);
-                });
-            })
+                page.commands.onChangeProvince(provinceId, page.dialogs.elements.districtCre, page.dialogs.elements.wardCre);
+                // page.commands.getALlDistricts(provinceId, page.dialogs.elements.districtCre).then(() => {
+                //     const districtId = page.dialogs.elements.districtCre.val();
+                //     page.commands.getAllWards(districtId, page.dialogs.elements.wardCre);
+                // });
+            });
+
+            page.dialogs.elements.provinceUp.on('change', function () {
+                const provinceId = $(this).val();
+                page.commands.onChangeProvince(provinceId, page.dialogs.elements.districtUp, page.dialogs.elements.wardUp);
+                // page.commands.getALlDistricts(provinceId, page.dialogs.elements.districtUp).then(() => {
+                //     const districtId = page.dialogs.elements.districtUp.val();
+                //     page.commands.getAllWards(districtId, page.dialogs.elements.wardUp);
+                // });
+            });
 
             page.dialogs.elements.districtCre.on('change', function () {
                 const districtId = $(this).val();
-                page.commands.getAllWards(districtId);
+                page.commands.getAllWards(districtId, page.dialogs.elements.wardCre);
+            })
+
+            page.dialogs.elements.districtUp.on('change', function () {
+                const districtId = $(this).val();
+                page.commands.getAllWards(districtId, page.dialogs.elements.wardUp);
             })
 
             page.elements.btnShowCreateModal.on('click', () => {
                 page.dialogs.elements.modalCreate.modal('show');
+            })
+
+            page.elements.footer.on('click', '.edit', function () {
+                customerId = $(this).data('id');
+                page.commands.handleAddEventShowModalUpdate(customerId);
             })
 
             page.elements.footer.on('click', '.deposit', function () {
@@ -512,6 +643,10 @@
 
             page.dialogs.elements.btnCreate.on('click', () => {
                 page.dialogs.elements.frmCreate.trigger('submit');
+            })
+
+            page.dialogs.elements.btnUpdate.on('click', () => {
+                page.dialogs.elements.frmUpdate.trigger('submit');
             })
 
             page.dialogs.elements.btnDeposit.on('click', () => {
@@ -549,10 +684,10 @@
             page.commands.getAllProvinces().then(() => {
                 const provinceId = page.dialogs.elements.provinceCre.val();
 
-                page.commands.getALlDistricts(provinceId).then(() => {
+                page.commands.getALlDistricts(provinceId, page.dialogs.elements.districtCre).then(() => {
                     const districtId = page.dialogs.elements.districtCre.val();
 
-                    page.commands.getAllWards(districtId);
+                    page.commands.getAllWards(districtId, page.dialogs.elements.wardCre);
                 });
             });
         }

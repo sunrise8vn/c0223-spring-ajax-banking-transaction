@@ -22,6 +22,8 @@ public interface ICustomerService extends IGeneralService<Customer, Long> {
 
     CustomerCreResDTO create(CustomerCreReqDTO customerCreReqDTO);
 
+    Customer update(Customer customer, CustomerUpReqDTO customerUpReqDTO);
+
     Customer deposit(Deposit deposit);
 
     void transfer(TransferCreReqDTO transferCreReqDTO);

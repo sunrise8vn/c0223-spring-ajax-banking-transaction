@@ -2,6 +2,7 @@ package com.cg.model;
 
 import com.cg.model.dto.CustomerCreResDTO;
 import com.cg.model.dto.CustomerResDTO;
+import com.cg.model.dto.CustomerUpResDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -90,6 +91,18 @@ public class Customer extends BaseEntity implements Validator {
                 .setPhone(phone)
                 .setBalance(balance)
                 .setLocationRegion(locationRegion.toLocationRegionCreResDTO())
+                ;
+    }
+
+
+    public CustomerUpResDTO toCustomerUpResDTO() {
+        return new CustomerUpResDTO()
+                .setId(id)
+                .setFullName(fullName)
+                .setEmail(email)
+                .setPhone(phone)
+                .setBalance(balance)
+                .setLocationRegion(locationRegion.toLocationRegionUpResDTO())
                 ;
     }
 }

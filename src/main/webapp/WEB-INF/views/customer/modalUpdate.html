@@ -1,0 +1,58 @@
+<th:block th:fragment="modalUpdate">
+    <div class="modal fade" id="modalUpdate" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Modal update</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="error-area hide"></div>
+
+                    <form method="post" id="frmUpdate">
+                        <div class="row mb-3">
+                            <div class="col-lg-4">
+                                <label class="fw-bold">Full Name</label>
+                                <input type="text" class="form-control" id="fullNameUp" name="fullNameUp">
+                            </div>
+                            <div class="col-lg-4">
+                                <label class="fw-bold">Email</label>
+                                <input type="email" class="form-control" id="emailUp" name="emailUp">
+                            </div>
+                            <div class="col-lg-4">
+                                <label class="fw-bold">Phone</label>
+                                <input type="tel" class="form-control" id="phoneUp">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-lg-3">
+                                <label class="fw-bold">Province</label>
+                                <select class="form-select" id="provinceUp"></select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="fw-bold">District</label>
+                                <select class="form-select" id="districtUp"></select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="fw-bold">Ward</label>
+                                <select class="form-select" id="wardUp"></select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="fw-bold">Address</label>
+                                <input type="text" class="form-control" id="addressUp">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnUpdate">
+                        <i class="fas fa-plus"></i>
+                        Save changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>

@@ -38,6 +38,46 @@ page.dialogs.elements.frmCreate.validate({
 })
 
 
+page.dialogs.elements.frmUpdate.validate({
+    rules: {
+        fullNameUp: {
+            required: true,
+            minlength: 5,
+            maxlength: 25
+        },
+        emailUp: {
+            required: true
+        }
+    },
+    messages: {
+        fullNameUp: {
+            required: 'Họ tên là bắt buộc',
+            minlength: 'Họ tên tối thiểu là ${0} ký tự',
+            maxlength: 'Họ tên tối đa là ${0} ký tự'
+        },
+        emailUp: {
+            required: 'Email là bắt buộc'
+        }
+    },
+    errorLabelContainer: page.dialogs.elements.errorAreaUpdate,
+    errorPlacement: function (error, element) {
+        error.appendTo(page.dialogs.elements.errorAreaUpdate);
+    },
+    showErrors: function(errorMap, errorList) {
+        if (this.numberOfInvalids() > 0) {
+            page.dialogs.elements.errorAreaUpdate.removeClass("hide").addClass("show");
+        } else {
+            page.dialogs.elements.errorAreaUpdate.removeClass("show").addClass("hide").empty();
+            $("#frmUpdate input.error").removeClass("error");
+        }
+        this.defaultShowErrors();
+    },
+    submitHandler: function () {
+        page.dialogs.commands.update();
+    }
+})
+
+
 page.dialogs.elements.frmDeposit.validate({
     rules: {
         transactionAmountDep: {
